@@ -39,7 +39,8 @@ LLM_Exp-7/
   requirements.txt 
   .env.example      
   .env              
-  README.md        
+  README.md   
+  results/     
 ```
 
 ## 5. Procedure followed
@@ -55,24 +56,28 @@ LLM_Exp-7/
 ## 6. Observation table
 *(Fill from your own run — `python test_api.py` prints this table. Add Swagger screenshots with the API key hidden.)*
 
-| Test case | Expected result | Actual result | Pass/Fail |
-|---|---|---|---|
-| Health endpoint | API reports running | | |
-| Supported question | Grounded answer is returned | | |
-| Unsupported question | Insufficient information/fallback | | |
-| Empty question | Validation error | | |
-| Backend unavailable | Controlled error; no secret details | | |
-| Response-time measurement | Latency is recorded | | |
+| Test Case | Result |
+|---|---|
+| All endpoints | ![All Endpoints](results/1.png) |
+| Root endpoint | ![Root Endpoint](results/2.png) |
+| Health endpoint | ![Health Endpoint](results/3.png) |
+| Supported question | ![Supported Question](results/4.png) ![Supported Question](results/5.png)|
+| Unsupported question | ![Unsupported Question](results/6.png)![Unsupported Question](results/7.png) |
+| Empty question | ![Empty Question](results/8.png)![Empty Question](results/9.png) |
+| Long question | ![Long Question](results/15.png) ![Long Question](results/16.png) ![Long Question](results/17.png)|
+| Backend unavailable | ![Backend Unavailable](results/12.png) ![Backend Unavailable](results/13.png) ![Backend Unavailable](results/14.png)|
+| Response-time measurement | ![Response Time](results/11.png) |
+| Logs | ![Logs](results/logs.png) |
 
 ## 7. Testing checklist
 - [ ] GET / returns API status and navigation links
 - [ ] GET /health returns a successful status
 - [ ] A valid question receives an answer
+- [ ] An unsupported question triggers the fallback response
 - [ ] An empty question is rejected
 - [ ] A very long question is rejected
-- [ ] An unsupported question triggers the fallback response
 - [ ] A backend/network failure produces a controlled error
-- [ ] Response time is recorded
+- [ ] Response time i.e latency is recorded
 - [ ] No API key or secret appears in source control, logs, or screenshots
 
 ## 8. Result
@@ -110,8 +115,6 @@ uvicorn app:app --reload
 Wait until the console shows "Startup complete". The first start takes a few seconds while the embedding model is loaded and the index is built.
 
 ## 10. Discussion Questions
-
-# 10. Discussion Questions
 
 **1. What is the purpose of FastAPI in this experiment?**
 
