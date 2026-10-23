@@ -35,6 +35,9 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b").strip()
 FAQ_PATH = os.getenv("FAQ_PATH", "support_faq.txt")
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+QDRANT_URL = os.getenv("QDRANT_URL", "").strip()
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "").strip()
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "support_faq").strip()
 
 FALLBACK_TEXT = (
     "I couldn't find a reliable answer in the available FAQ. Please contact "
@@ -78,7 +81,44 @@ def initialize():
     chunks = splitter.split_documents([faq_doc])
 
     embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    vector_store = FAISS.from_documents(chunks, embedding_model)
+    vector_store = None
+
+    if QDRANT_URL and QDRANT_API_KEY:
+        try:
+            from qdrant_client import QdrantClient
+            from langchain_qdrant import QdrantVectorStore
+
+            client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+            collection_exists = False
+            try:
+                collection_exists = client.collection_exists(QDRANT_COLLECTION)
+            except Exception:
+                pass
+
+            if collection_exists:
+                logger.info("Connecting to existing Qdrant collection '%s'...", QDRANT_COLLECTION)
+                vector_store = QdrantVectorStore.from_existing_collection(
+                    embedding=embedding_model,
+                    collection_name=QDRANT_COLLECTION,
+                    url=QDRANT_URL,
+                    api_key=QDRANT_API_KEY,
+                )
+            else:
+                logger.info("Uploading %d chunks to Qdrant collection '%s'...", len(chunks), QDRANT_COLLECTION)
+                vector_store = QdrantVectorStore.from_documents(
+                    documents=chunks,
+                    embedding=embedding_model,
+                    url=QDRANT_URL,
+                    api_key=QDRANT_API_KEY,
+                    collection_name=QDRANT_COLLECTION,
+                )
+            logger.info("Qdrant Cloud vector store ready.")
+        except Exception as exc:
+            logger.warning("Could not initialize Qdrant (%s), falling back to FAISS", exc)
+            vector_store = FAISS.from_documents(chunks, embedding_model)
+    else:
+        vector_store = FAISS.from_documents(chunks, embedding_model)
+
     retriever = vector_store.as_retriever(
         search_type="similarity", search_kwargs={"k": 3}
     )

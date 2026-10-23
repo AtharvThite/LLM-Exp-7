@@ -10,3 +10,5 @@ langchain-huggingface
 langgraph
 faiss-cpu
 sentence-transformers
+qdrant-client
+langchain-qdrant
