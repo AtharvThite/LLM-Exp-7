@@ -26,9 +26,11 @@ To prepare the Customer Support RAG application from Experiment 5/6 for API-base
 
 **Cloud-hosted LLM API vs local LLM.** In a cloud API (Groq), the model runs on the provider's server and our app calls it over the internet with an API key. In a local LLM (Ollama), the model runs on our own computer. This experiment uses the Groq cloud API, which provides ultra-fast inference with rate limits and quotas.
 
+**Persistent Vector Database (Qdrant Cloud).** In a prototype, vector indices are typically built in-memory on every startup (e.g. FAISS). In a production-oriented application, vectors are stored in a managed, scalable cloud vector database (Qdrant Cloud cluster). Documents are embedded once and stored in a remote collection (`support_faq`), allowing instantaneous application startup, horizontal scaling, and persistence across server restarts.
 
 ## 3. Selected backend
-☑ Cloud-hosted API (Groq Cloud API, model `qwen/qwen3.8-27b`)  ☐ Ollama local LLM
+- **LLM Backend**: ☑ Cloud-hosted API (Groq Cloud API, model `qwen/qwen3.8-27b`)  ☐ Ollama local LLM
+- **Vector Database**: Qdrant Cloud cluster (with fallback to in-memory FAISS)
 
 ## 4. Project structure
 ```
@@ -44,9 +46,9 @@ LLM_Exp-7/
 ```
 
 ## 5. Procedure followed
-1. Moved the Experiment 6 RAG logic (dataset loading, chunking 450/60, MiniLM embeddings, FAISS retriever k=3, LangGraph nodes) into `support_rag.py`; configured with Groq API chat completions backend.
+1. Moved the Customer Support RAG logic into `support_rag.py`; configured with Groq API chat completions backend and Qdrant Cloud cluster for vector storage (with local FAISS fallback).
 2. Created `app.py` with `GET /`, `GET /health`, and `POST /ask`.
-3. Embedding model, FAISS index, and compiled graph are built **once** at startup (FastAPI lifespan).
+3. Vector store connection (Qdrant collection `support_faq`) and compiled LangGraph workflow are initialized **once** at startup (FastAPI lifespan).
 4. Validation: empty / whitespace-only question rejected; max 1,000 characters.
 5. Errors: invalid input → HTTP 422; Groq failure (bad key, quota, timeout, network, wrong model) → generic HTTP 503; unexpected errors → generic HTTP 500. No stack traces or keys exposed.
 6. Logging to console and `app.log` (outcome, intent, retries, latency, question *length* only — no key, no question text).
@@ -97,8 +99,11 @@ Selected backend: ☑ Cloud-hosted API ☐ Ollama local LLM
    ```bash
    cp .env.example .env
    ```
-3. Open `.env` and replace `paste_your_groq_api_key_here` with your Groq API key.
-4. Set `GROQ_MODEL=qwen/qwen3.8-27b` (or another supported model like `llama-3.3-70b-versatile` or `llama-3.1-8b-instant`).
+3. Open `.env` and configure:
+   - `GROQ_API_KEY`: your Groq API key.
+   - `GROQ_MODEL`: `qwen/qwen3.8-27b` (or `llama-3.3-70b-versatile` / `llama-3.1-8b-instant`).
+   - `QDRANT_URL`: your Qdrant Cloud cluster URL (e.g. `https://...cloud.qdrant.io`).
+   - `QDRANT_API_KEY`: your Qdrant API key.
 
 **Step 3 – Install requirements** (Python 3.10 or later)
 ```bash
@@ -112,7 +117,7 @@ pip install -r requirements.txt
 ```bash
 uvicorn app:app --reload
 ```
-Wait until the console shows "Startup complete". The first start takes a few seconds while the embedding model is loaded and the index is built.
+Wait until the console shows "Startup complete". The first run uploads the chunks to your Qdrant collection; subsequent runs connect instantly to the existing collection.
 
 ## 10. Discussion Questions
 
@@ -142,7 +147,7 @@ The health endpoint provides a quick way to check whether the API service is run
 
 **7. Why should the model and vector index not be loaded for every request?**
 
-Loading the embedding model and creating the FAISS vector index require time and memory. Repeating these operations for every request would increase response latency and waste computational resources. Therefore, these components should be initialized once during application startup and reused for subsequent requests.
+Loading the embedding model and computing vectors for the entire dataset require significant CPU/GPU time and memory. Repeating these operations for every request would create huge response latencies and exhaust resources. In this production setup, the FAQ documents are embedded once into a persistent Qdrant Cloud collection (`support_faq`), and the connection is established once during application startup and reused for all subsequent search requests.
 
 **8. What should RAG do when the answer is absent from its knowledge base?**
 
@@ -164,4 +169,4 @@ Two important requirements are:
 
 ## 11. Conclusion
 
-In this experiment, the Customer Support RAG application from Experiment 6 was turned into an API using FastAPI, with the Groq cloud API as the LLM backend. We added input validation, error handling, logging, and response-time measurement. We tested the /health and /ask endpoints with supported, unsupported, empty, and too-long questions, and with a backend failure. The app returned grounded answers, gave a fallback when the FAQ had no answer, and showed only generic errors without exposing the API key. The model and vector index are loaded once for speed. The experiment showed the difference between a prototype and a production-oriented application. It is still not fully production-ready, because a real public service also needs authentication, HTTPS, rate limiting, monitoring, and load testing.
+In this experiment, the Customer Support RAG application from Experiment 6 was turned into a production-oriented API using FastAPI, with the Groq cloud API as the LLM backend and a managed Qdrant Cloud cluster for vector storage. We added input validation, error handling, logging, and response-time measurement. We tested the `/`, `/health`, and `/ask` endpoints with supported, unsupported, empty, and too-long questions, and with a backend failure. The app returned grounded answers, gave a fallback when the FAQ had no answer, and showed only generic errors without exposing API keys or secrets. By leveraging Qdrant Cloud, vectors are persisted remotely, eliminating redundant indexing upon restart. The experiment demonstrated the clear difference between a prototype and a production-oriented application.
