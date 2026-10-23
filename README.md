@@ -3,6 +3,13 @@
 ## 1. Aim
 To prepare the Customer Support RAG application from Experiment 5/6 for API-based use by adding input validation, error handling, basic logging, response-time measurement, and endpoint testing.
 
+### Learning Objectives
+- Explain the difference between a prototype and a production-oriented application. 
+- Expose an existing RAG application through a FastAPI endpoint. 
+- Choose either a cloud-hosted free/limited-quota LLM API or a local LLM served by Ollama. 
+- Validate requests, handle failures safely, and measure response time. 
+- Test endpoints using the interactive API documentation.
+
 ## 2. Theory
 
 **Prototype vs production-oriented application.** A notebook-based RAG prototype is good for experimenting, but only the person running the notebook can use it. A production-oriented application can be used by other programs, checks its inputs, handles failures safely, records what happens (logs), and is measured for speed.
@@ -25,7 +32,7 @@ To prepare the Customer Support RAG application from Experiment 5/6 for API-base
 
 ## 4. Project structure
 ```
-experiment7/
+LLM_Exp-7/
   app.py            
   support_rag.py    
   support_faq.txt   
@@ -154,4 +161,4 @@ Two important requirements are:
 
 ## 11. Conclusion
 
-In this experiment, the Customer Support RAG application from Experiment 6 was turned into an API using FastAPI, with the Mistral cloud API as the LLM backend. We added input validation, error handling, logging, and response-time measurement. We tested the /health and /ask endpoints with supported, unsupported, empty, and too-long questions, and with a backend failure. The app returned grounded answers, gave a fallback when the FAQ had no answer, and showed only generic errors without exposing the API key. The model and vector index are loaded once for speed. The experiment showed the difference between a prototype and a production-oriented application. It is still not fully production-ready, because a real public service also needs authentication, HTTPS, rate limiting, monitoring, and load testing.
+In this experiment, the Customer Support RAG application from Experiment 6 was turned into an API using FastAPI, with the Groq cloud API as the LLM backend. We added input validation, error handling, logging, and response-time measurement. We tested the /health and /ask endpoints with supported, unsupported, empty, and too-long questions, and with a backend failure. The app returned grounded answers, gave a fallback when the FAQ had no answer, and showed only generic errors without exposing the API key. The model and vector index are loaded once for speed. The experiment showed the difference between a prototype and a production-oriented application. It is still not fully production-ready, because a real public service also needs authentication, HTTPS, rate limiting, monitoring, and load testing.
