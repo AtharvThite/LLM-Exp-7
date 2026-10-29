@@ -5,6 +5,7 @@ Run:   uvicorn app:app --reload
 Docs:  http://127.0.0.1:8000/docs
 """
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from typing import List
@@ -102,8 +103,8 @@ async def unhandled_error_handler(request: Request, exc: Exception):
 
 
 # ---------------------------------------------------------------- Endpoints
-@app.get("/")
-def root():
+@app.get("/api")
+def api_root():
     return {
         "message": "Customer Support RAG API is running",
         "status": "ok",
@@ -113,6 +114,7 @@ def root():
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     """Reports that the API process is running and the RAG index is loaded.
     Limitation: it does NOT verify that the Groq API is reachable."""
@@ -120,6 +122,7 @@ def health():
 
 
 @app.post("/ask", response_model=AskResponse)
+@app.post("/api/ask", response_model=AskResponse)
 def ask(req: AskRequest):
     start = time.perf_counter()
     try:
@@ -145,3 +148,22 @@ def ask(req: AskRequest):
         fallback=result["fallback"],
         latency_ms=round(latency, 1),
     )
+
+
+# --------------------------------------------------- Static files (Frontend)
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if not os.path.exists(static_dir):
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
+
+if os.path.exists(static_dir):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+else:
+    @app.get("/")
+    def root():
+        return {
+            "message": "Customer Support RAG API is running",
+            "status": "ok",
+            "docs": "/docs",
+            "health": "/health",
+        }
