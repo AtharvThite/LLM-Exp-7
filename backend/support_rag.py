@@ -23,7 +23,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import END, START, StateGraph
 
-load_dotenv()  # reads .env (which is excluded from version control)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv()  # reads .env in cwd
+load_dotenv(os.path.join(BASE_DIR, ".env"))  # also reads backend/.env if present
 logger = logging.getLogger("support_rag")
 
 # ---------------------------------------------------------------- 1. Config
@@ -32,7 +34,14 @@ GROQ_API_URL = os.getenv(
     "GROQ_API_URL", "https://api.groq.com/openai/v1/chat/completions"
 ).strip()
 GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b").strip()
-FAQ_PATH = os.getenv("FAQ_PATH", "support_faq.txt")
+
+_env_faq = os.getenv("FAQ_PATH", "support_faq.txt")
+if os.path.isabs(_env_faq) or os.path.exists(_env_faq):
+    FAQ_PATH = _env_faq
+else:
+    _candidate = os.path.join(BASE_DIR, _env_faq)
+    FAQ_PATH = _candidate if os.path.exists(_candidate) else _env_faq
+
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 QDRANT_URL = os.getenv("QDRANT_URL", "").strip()

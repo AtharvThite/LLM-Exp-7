@@ -35,15 +35,48 @@ To prepare the Customer Support RAG application from Experiment 5/6 for API-base
 ## 4. Project structure
 ```
 LLM_Exp-7/
-  app.py            
-  support_rag.py    
-  support_faq.txt   
-  requirements.txt 
-  .env.example      
-  .env              
-  README.md   
-  results/     
+  backend/
+    app.py             # FastAPI app with CORS, validation, logging, endpoints
+    support_rag.py     # RAG pipeline with Groq cloud LLM & Qdrant/FAISS vector store
+    support_faq.txt    # Support FAQ dataset
+    requirements.txt   # Python backend dependencies
+    .env               # Environment configuration (API keys)
+    .env.example       # Example environment template
+  frontend/
+    src/
+      components/
+        Header.jsx     # Top bar with live health indicator & settings
+        EmptyState.jsx # Minimalist greeting & suggestion cards
+        MessageItem.jsx# Chat bubbles, intent badges, latency & source snippets
+        InputArea.jsx  # Floating prompt textarea with character counter
+      services/
+        api.js         # API integration with FastAPI endpoints
+      App.jsx          # Main chat view and state management
+      index.css        # Tailwind CSS imports & base styles
+    package.json       # React & Tailwind dependencies
+    vite.config.js     # Vite configuration with Tailwind & proxy
+  README.md
+  results/
 ```
+
+### Running the Application
+
+#### 1. Backend (FastAPI)
+```bash
+cd backend
+# With virtualenv activated
+uvicorn app:app --reload --host 127.0.0.1 --port 8000
+```
+- API is accessible at: `http://127.0.0.1:8000`
+- Swagger Docs: `http://127.0.0.1:8000/docs`
+
+#### 2. Frontend (React + Tailwind CSS)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+- Web UI is accessible at: `http://127.0.0.1:5173`
 
 ## 5. Procedure followed
 1. Moved the Customer Support RAG logic into `support_rag.py`; configured with Groq API chat completions backend and Qdrant Cloud cluster for vector storage (with local FAISS fallback).

@@ -1,5 +1,11 @@
 .env
+backend/.env
+backend/__pycache__/
+backend/.venv
 __pycache__/
 *.log
 .venv/
 venv/
+node_modules/
+dist/
+.DS_Store

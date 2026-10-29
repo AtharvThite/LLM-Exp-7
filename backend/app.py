@@ -11,6 +11,7 @@ from typing import List
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -44,6 +45,15 @@ app = FastAPI(
     description="Experiment 7 - RAG app (LangChain + LangGraph) with Groq API backend.",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+# Enable CORS for frontend development and production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
